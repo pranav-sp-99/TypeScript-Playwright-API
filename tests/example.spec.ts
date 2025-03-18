@@ -120,5 +120,35 @@ test.describe('Sample test cases for all basic HTTP/HTTPS requests',() => {
         expect (putAPIBody.lastname).toBe(putRequestBody.lastname)
     });
 
+    test('DELETE API Request - Deleting a booking', async ({request}) => {
+        const requestBody: Booking = BookingRequestBody()
+        const postResponse = await request.post(`/booking`, { data: requestBody })
+
+        const postResponseData:BookingResponse = await postResponse.json()
+        console.log(`The POST response: ${JSON.stringify(postResponseData, null, 2)}`)
+
+        expect(postResponse.status()).toBe(200)
+        const bookingId: number = postResponseData.bookingid
+
+        const tokenResponse = await request.post(`/auth`, {
+            data: tokenGenerator()
+        })
+        const tokenResponseData: TokenResponse = await tokenResponse.json()
+        console.log(`TOKEN POST: ${JSON.stringify(tokenResponseData, null, 2)}`)
+        expect(tokenResponse.status()).toBe(200);
+
+        const token: string = tokenResponseData.token;
+        console.log(`Token: ${token}`)
+
+        const deleteResponse = await request.delete(`/booking/${bookingId}`,{
+            headers:{
+                "Content-Type":"application/json",
+                "Cookie":`token=${token}`
+            }
+        })
+
+        expect (deleteResponse.status()).toBe(201)
+        expect (deleteResponse.statusText()).toBe('Created')
+    })
 })
 
