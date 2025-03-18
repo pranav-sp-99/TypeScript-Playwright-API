@@ -9,7 +9,7 @@ import { createPatchRequest } from '../src/utils/patch-data-helper';
 dotenv.config()
 
 // Load test data
-const helper = new PatchDataHelper('./src/test-data/patch-test-data.json');
+const helper = new PatchDataHelper('./src/fixtures/data/patch-test-data.json');
 const testCases = helper.getPatchTestCases();
 
 test.describe('Patch Test Suite', () => {
