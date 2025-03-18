@@ -1,0 +1,24 @@
+{
+  "testCases": [
+    {
+      "description": "Update all fields",
+      "fieldsToUpdate": ["all"],
+      "expectedStatus": 200
+    },
+    {
+      "description": "Update first name only",
+      "fieldsToUpdate": ["firstname"],
+      "expectedStatus": 200
+    },
+    {
+      "description": "Update checkout date only",
+      "fieldsToUpdate": ["bookingdates.checkout"],
+      "expectedStatus": 200
+    },
+    {
+      "description": "Update booking dates",
+      "fieldsToUpdate": ["bookingdates"],
+      "expectedStatus": 200
+    }
+  ]
+}

@@ -1,6 +1,6 @@
-export interface BookingDates {
-    checkin: string;
-    checkout: string;
+export type BookingDates = {
+    checkin: string |Date;
+    checkout: string | Date;
 }
 
 export interface Booking {
@@ -28,4 +28,21 @@ export type BookingNumberDetails = {
 
 export type TokenResponse ={
     "token":string
+}
+
+export type Fieldname = 'firstname' | 'lastname' | 'totalprice' | 'depositpaid' | 'bookingdates' | 'bookingdates.checkin' | 'bookingdates.checkout' | 'additionalneeds' | 'all'
+
+export interface PatchTestCase{
+    'description':string,
+    'fieldsToUpdate':Fieldname[]
+    'expectedStatus':number
+}
+
+export type PatchData = {
+    firstname?: string;
+    lastname?: string;
+    totalprice?: number;
+    depositpaid?: boolean;
+    bookingdates?: BookingDates;
+    additionalneeds?: string;
 }
