@@ -15,8 +15,6 @@
     "@playwright/test": "^1.51.0",
     "@types/chance": "^1.1.6",
     "@types/node": "^22.13.10",
-    "allure-commandline": "^2.33.0",
-    "allure-playwright": "^3.2.0",
     "monocart-reporter": "^2.9.16",
     "pwmochawesome": "^2.0.2",
     "ts-node": "^10.9.2",
