@@ -3,6 +3,7 @@ import fs from 'fs';
 import Chance from 'chance'
 import { PatchTestCase,Fieldname,PatchData } from "../interface/booking-api.interface"
 
+// Helper class to manage patch test cases from JSON file
 export class PatchDataHelper{
     private jsonFilePath:string
 
@@ -10,6 +11,7 @@ export class PatchDataHelper{
         this.jsonFilePath = path.resolve(jsonFilePath)
     }
 
+    // Reads and returns patch test cases from the JSON file
     getPatchTestCases(): PatchTestCase[] {
         try {
             const rawData = fs.readFileSync(this.jsonFilePath, 'utf-8');
@@ -22,9 +24,12 @@ export class PatchDataHelper{
     }
 }
 
+// Initialize Chance.js for random data generation
 const chance = new Chance()
 
+// Creates a patch request body based on specified fields to update
 export function createPatchRequest(fieldsToUpdate: Fieldname[] = []) {
+    // Define all possible fields with their random data generators
     const allFields = {
       firstname: () => chance.first({gender:'male'}),
       lastname: () => chance.last(),
@@ -37,12 +42,12 @@ export function createPatchRequest(fieldsToUpdate: Fieldname[] = []) {
       additionalneeds: () => chance.sentence({words:7})
     };
   
-    // If no fields specified, return empty object
+    // Return empty object if no fields specified
     if (fieldsToUpdate.length === 0) {
       return {};
     }
   
-    // Handle case where user wants to update all fields
+    // Handle special case to update all fields
     if (fieldsToUpdate.includes('all')) {
       return {
         firstname: allFields.firstname(),
@@ -60,7 +65,9 @@ export function createPatchRequest(fieldsToUpdate: Fieldname[] = []) {
     // Create object with only requested fields
     const patchData: PatchData = {};
     
+    // Process each field to update
     fieldsToUpdate.forEach(field => {
+      // Handle special cases for booking dates
       if (field === 'bookingdates.checkin') {
         patchData.bookingdates = patchData.bookingdates || { checkin: '', checkout: '' };
         patchData.bookingdates.checkin = allFields.bookingdates.checkin();
