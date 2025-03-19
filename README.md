@@ -5,19 +5,51 @@ Welcome to our awesome API testing playground! This project is like a Swiss Army
 ## 🚀 What's This All About?
 
 This project is a modern API testing framework that helps you test REST APIs with style and confidence. It's built using:
-- TypeScript (because we're fancy like that)
-- Playwright (for all the heavy lifting)
-- Chance.js (for generating random test data)
+- TypeScript (for type safety and maintainability)
+- Playwright (for powerful API testing capabilities)
+- Chance.js (for smart test data generation)
 - Monocart Reporter (for beautiful test reports)
 
 ## 🛠️ Tech Stack
 
-- **TypeScript** - Because we love type safety
-- **Playwright** - For powerful API testing capabilities
-- **Chance.js** - For generating random test data
-- **Monocart Reporter** - For beautiful test reports
-- **dotenv** - For managing environment variables
-- **Mochawesome** - For additional reporting options
+### Core Technologies
+- **TypeScript** (v5.8.2)
+  - Type safety and interface definitions
+  - Enhanced code maintainability
+  - Modern ECMAScript features
+  - Object-oriented programming support
+
+- **Playwright** (v1.51.0)
+  - Powerful API testing capabilities
+  - Built-in retry mechanisms
+  - Parallel test execution
+  - Comprehensive test reporting
+
+- **Chance.js** (v1.1.12)
+  - Smart random data generation
+  - Consistent test data patterns
+  - Multiple data type support
+  - Localized data generation
+
+- **dotenv** (v16.4.7)
+  - Secure environment management
+  - Multiple environment support
+  - Local development configuration
+  - CI/CD integration
+
+### Reporting Tools
+- **Monocart Reporter**
+  - Beautiful HTML reports
+  - Test execution timeline
+  - Failure analysis
+  - Execution metrics
+  - Parallel test reporting
+
+- **Mochawesome**
+  - Alternative HTML reports
+  - Interactive navigation
+  - Custom theming
+  - Historical data tracking
 
 ## 🎯 Features
 

@@ -7,10 +7,8 @@
 4. [Technical Stack](#technical-stack)
 5. [Core Components](#core-components)
 6. [Test Implementation](#test-implementation)
-7. [CI/CD Pipeline](#cicd-pipeline)
-8. [Reporting](#reporting)
-9. [Best Practices](#best-practices)
-10. [Troubleshooting Guide](#troubleshooting-guide)
+7. [Best Practices](#best-practices)
+8. [Troubleshooting Guide](#troubleshooting-guide)
 
 ## Introduction
 
@@ -49,33 +47,76 @@ project-root/
 │   └── sample-test-parameterization.spec.ts  # Parameterized tests
 └── config files...
 ```
-##Technical Stack
-###Core Technologies
+
+## Technical Stack
+
+### Core Technologies
+
 1. **TypeScript** (v5.8.2)
-  -Provides static typing
-  -Enhances code maintainability
-  -Enables better IDE support
+   - Provides static typing and interface definitions
+   - Enhances code maintainability through type safety
+   - Enables better IDE support and code navigation
+   - Supports modern ECMAScript features
+   - Facilitates object-oriented programming patterns
 
 2. **Playwright** (v1.51.0)
-  -Handles API requests
-  -Provides test runner
-  -Manages test fixtures
-  
-3. **Chance.js** (v1.1.12)
-  -Generates random test data
-  -Ensures test data variety
-  -Supports multiple data types
+   - Handles API requests with built-in retry mechanisms
+   - Provides powerful test runner with parallel execution
+   - Manages test fixtures and test isolation
+   - Supports multiple assertion styles
+   - Offers comprehensive test reporting capabilities
 
-###Reporting Tools
+3. **Chance.js** (v1.1.12)
+   - Generates random test data with consistent patterns
+   - Ensures test data variety and edge cases
+   - Supports multiple data types and formats
+   - Provides localized data generation
+   - Enables repeatable random data through seeding
+
+4. **dotenv** (v16.4.7)
+   - Manages environment variables securely
+   - Supports multiple environment configurations
+   - Enables easy local development setup
+   - Prevents sensitive data exposure
+   - Facilitates CI/CD pipeline configuration
+
+### Reporting Tools
+
 1. **Monocart Reporter**
-  -Primary reporting tool
-  -Provides detailed test execution reports
-  -Supports visual test results
+   - Primary reporting tool with HTML output
+   - Provides detailed test execution reports
+   - Supports visual test results and screenshots
+   - Offers timeline view of test execution
+   - Includes failure analysis and retry information
+   - Features customizable report styling
+   - Supports parallel execution reporting
+   - Provides test execution metrics and trends
 
 2. **Mochawesome**
-  -Alternative reporting option
-  -HTML report generation
-  -Test execution statistics
+   - Alternative HTML report generation
+   - Test execution statistics and metrics
+   - Failure screenshots and error details
+   - Interactive report navigation
+   - Support for test filtering and search
+   - Custom report theming options
+   - Integration with CI/CD pipelines
+   - Historical test execution data
+
+### Development Tools
+
+1. **TypeScript Compiler** (v5.8.2)
+   - Static type checking
+   - Code transpilation
+   - Modern JavaScript features
+   - Declaration file generation
+   - Project configuration management
+
+2. **Node.js** (v14+)
+   - Runtime environment
+   - Package management
+   - Dependency resolution
+   - Script execution
+   - Environment management
 
 ## Core Components
 
@@ -232,6 +273,6 @@ async patchBooking(bookingId: number, token: string, fieldsToUpdate: Fieldname[]
 
 ---
 
-*Last Updated: March 2024*
+*Last Updated: March 2025*
 
  
