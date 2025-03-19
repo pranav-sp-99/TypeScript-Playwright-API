@@ -25,7 +25,7 @@ This project is a modern API testing framework that helps you test REST APIs wit
 - 🎲 Random test data generation
 - 📊 Beautiful test reports with Monocart
 - 🔄 Test parameterization support
-- 🎭 Fixture-based test organization
+- 🎭 API Helper pattern for clean test organization
 - 🔐 Environment variable management
 - 📈 Multiple reporting options
 
@@ -69,73 +69,63 @@ npm run test:report
 
 ```
 ├── src/
-│   ├── fixtures/     # Test fixtures and shared test data
-│   │   └── data/     # JSON test data files
-│   ├── interface/    # TypeScript interfaces
-│   └── utils/        # Utility functions and helpers
-├── tests/            # Test files
-├── .env              # Environment variables
-└── playwright.config.ts  # Playwright configuration
+│   ├── fixtures/          # Test fixtures and data generators
+│   │   ├── data/         # JSON test data files
+│   │   └── helpers/      # Data generation helpers
+│   ├── interface/        # TypeScript interfaces
+│   └── utils/           # Utility functions and API helper
+├── tests/               # Test files
+├── .env                # Environment variables
+└── playwright.config.ts # Playwright configuration
 ```
 
 ## 🎭 Test Examples
 
-### Parameterized Tests with Test Data
+### Using the API Helper
 ```typescript
-import { test } from '@playwright/test';
-import { PatchDataHelper } from '../src/utils/patch-data-helper';
-
-// Load test data from JSON
-const helper = new PatchDataHelper('./src/fixtures/data/patch-test-data.json');
-const testCases = helper.getPatchTestCases();
-
-test.describe('Patch Test Suite', () => {
-    test.use({ baseURL: process.env.BASE_API_URL });
-
-    for (const testCase of testCases) {
-        test(`PATCH API - ${testCase.description}`, async ({ request }) => {
-            // Test implementation
-            const response = await request.patch(`/booking/${bookingId}`, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Cookie': `token=${token}`
-                },
-                data: patchData
-            });
-            
-            expect(response.status()).toBe(testCase.expectedStatus);
-        });
-    }
+test('Create and verify booking', async ({ request }) => {
+    const apiHelper = new ApiHelper(request);
+    
+    // Create booking
+    const { bookingData } = await apiHelper.createBooking();
+    
+    // Get auth token
+    const token = await apiHelper.generateToken();
+    
+    // Update booking
+    const { response } = await apiHelper.updateBooking(
+        bookingData.bookingid,
+        token,
+        updatedData
+    );
+    
+    expect(response.status()).toBe(200);
 });
 ```
 
-### Fixture-based Tests with Token Authentication
+### Parameterized Tests
 ```typescript
-test('should create and update a booking', async ({ request }) => {
-    // Create booking
-    const requestBody = BookingRequestBody();
-    const createResponse = await request.post('/booking', { 
-        data: requestBody 
+for (const testCase of testCases) {
+    test(`PATCH API - ${testCase.description}`, async ({ request }) => {
+        const apiHelper = new ApiHelper(request);
+        const { bookingData } = await apiHelper.createBooking();
+        const token = await apiHelper.generateToken();
+        
+        const { patchResponse } = await apiHelper.patchBooking(
+            bookingData.bookingid,
+            token,
+            testCase.fieldsToUpdate
+        );
+        
+        expect(patchResponse.status()).toBe(testCase.expectedStatus);
     });
-    
-    // Get auth token
-    const tokenResponse = await request.post('/auth', {
-        data: tokenGenerator()
-    });
-    const token = (await tokenResponse.json()).token;
-    
-    // Update booking
-    const updateResponse = await request.patch(`/booking/${bookingId}`, {
-        headers: { 'Cookie': `token=${token}` },
-        data: updateData
-    });
-});
+}
 ```
 
 ## 📊 Test Data Structure
 
 ### Test Data Organization
-Our test data is organized in JSON files under `src/fixtures/data/`. Here's an example structure:
+Our test data is organized in JSON files:
 
 ```json
 {
@@ -154,22 +144,6 @@ Our test data is organized in JSON files under `src/fixtures/data/`. Here's an e
 }
 ```
 
-### Test Data Interfaces
-We use TypeScript interfaces to ensure type safety:
-
-```typescript
-interface PatchTestCase {
-    description: string;
-    fieldsToUpdate: string[];
-    expectedStatus: number;
-}
-
-interface BookingResponse {
-    bookingid: number;
-    booking: Booking;
-}
-```
-
 ## 🔧 Troubleshooting Tips
 
 ### Common Issues and Solutions
@@ -180,19 +154,14 @@ interface BookingResponse {
    ```
    - Check if JSON file exists in the correct location
    - Verify JSON file has valid format
-   - Ensure file path is correct in PatchDataHelper
+   - Ensure file path is correct in helper classes
 
-2. **Authentication Failures**
+2. **Authentication Issues**
    - Verify .env file contains correct credentials
    - Check if token is included in request headers
    - Ensure token hasn't expired
 
-3. **Request Failures**
-   - Verify baseURL in .env file
-   - Check network connectivity
-   - Validate request payload format
-
-4. **Type Errors**
+3. **Type Errors**
    - Run `tsc` to check for type issues
    - Ensure interfaces match API response structure
    - Check if all required properties are included
@@ -208,11 +177,6 @@ interface BookingResponse {
    ```typescript
    console.log('Test case:', testCase);
    console.log('Response:', await response.json());
-   ```
-
-3. Use Playwright Inspector:
-   ```bash
-   npm test -- --debug
    ```
 
 ## 📊 Reports

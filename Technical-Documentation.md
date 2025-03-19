@@ -5,13 +5,12 @@
 2. [Architecture Overview](#architecture-overview)
 3. [Project Structure](#project-structure)
 4. [Technical Stack](#technical-stack)
-5. [Configuration Files](#configuration-files)
-6. [Source Code Organization](#source-code-organization)
-7. [Test Implementation](#test-implementation)
-8. [CI/CD Pipeline](#cicd-pipeline)
-9. [Reporting](#reporting)
-10. [Best Practices](#best-practices)
-11. [Troubleshooting Guide](#troubleshooting-guide)
+5. [Core Components](#core-components)
+6. [Test Implementation](#test-implementation)
+7. [CI/CD Pipeline](#cicd-pipeline)
+8. [Reporting](#reporting)
+9. [Best Practices](#best-practices)
+10. [Troubleshooting Guide](#troubleshooting-guide)
 
 ## Introduction
 
@@ -23,107 +22,82 @@ The framework follows a modular architecture with clear separation of concerns:
 
 ```
 TypeScript Playwright API Testing Framework
-├── Test Execution Layer (Playwright)
-├── Data Management Layer (JSON + Fixtures)
-├── Utility Layer (Helper Functions)
+├── API Helper Layer (Reusable API Methods)
+├── Test Data Management Layer (JSON + Fixtures)
 ├── Type System Layer (TypeScript Interfaces)
+├── Test Execution Layer (Playwright)
 ├── Reporting Layer (Monocart + Mochawesome)
 └── CI/CD Layer (GitHub Actions)
 ```
-
-### Key Components Interaction
-1. Test files use Playwright's test runner
-2. Test data is managed through JSON files and fixtures
-3. Helper functions provide reusable functionality
-4. TypeScript ensures type safety
-5. Reports are generated after test execution
-6. GitHub Actions automate the testing pipeline
 
 ## Project Structure
 
 ```
 project-root/
-├── .github/
-│   └── workflows/          # CI/CD configuration
-│       └── playwright.yml  # GitHub Actions workflow
 ├── src/
-│   ├── fixtures/          # Test fixtures and data
-│   ├── interface/         # TypeScript interfaces
-│   └── utils/            # Helper functions
-├── tests/                # Test implementation
-├── .env                  # Environment configuration
-├── playwright.config.ts  # Playwright configuration
-└── tsconfig.json        # TypeScript configuration
+│   ├── fixtures/
+│   │   ├── data/              # JSON test data files
+│   │   ├── post-data-helper.ts   # POST request data generator
+│   │   ├── patch-data-helper.ts  # PATCH request data generator
+│   │   └── token-generator.ts    # Authentication token generator
+│   ├── interface/
+│   │   └── booking-api.interface.ts  # TypeScript interfaces
+│   └── utils/
+│       └── api-helper.ts      # Core API helper class
+├── tests/
+│   ├── example.spec.ts        # Basic API test examples
+│   └── sample-test-parameterization.spec.ts  # Parameterized tests
+└── config files...
 ```
-
-## Technical Stack
-
-### Core Technologies
+##Technical Stack
+###Core Technologies
 1. **TypeScript** (v5.8.2)
-   - Provides static typing
-   - Enhances code maintainability
-   - Enables better IDE support
+  -Provides static typing
+  -Enhances code maintainability
+  -Enables better IDE support
 
 2. **Playwright** (v1.51.0)
-   - Handles API requests
-   - Provides test runner
-   - Manages test fixtures
-
+  -Handles API requests
+  -Provides test runner
+  -Manages test fixtures
+  
 3. **Chance.js** (v1.1.12)
-   - Generates random test data
-   - Ensures test data variety
-   - Supports multiple data types
+  -Generates random test data
+  -Ensures test data variety
+  -Supports multiple data types
 
-### Reporting Tools
+###Reporting Tools
 1. **Monocart Reporter**
-   - Primary reporting tool
-   - Provides detailed test execution reports
-   - Supports visual test results
+  -Primary reporting tool
+  -Provides detailed test execution reports
+  -Supports visual test results
 
 2. **Mochawesome**
-   - Alternative reporting option
-   - HTML report generation
-   - Test execution statistics
+  -Alternative reporting option
+  -HTML report generation
+  -Test execution statistics
 
-## Configuration Files
+## Core Components
 
-### playwright.config.ts
+### 1. ApiHelper Class
+The `ApiHelper` class serves as the main interface for API interactions:
+
 ```typescript
-// Key configuration options
-{
-  testDir: './tests',
-  timeout: 30000,
-  reporter: [['monocart-reporter', {
-    name: 'My Test Report',
-    outputFile: './monocart-report/index.html'
-  }]]
+export class ApiHelper {
+    constructor(private request: APIRequestContext) {}
+
+    // Core API Methods
+    async createBooking(postRequestBody?: Booking): Promise<BookingResponse>
+    async getBooking(bookingId: number): Promise<Booking>
+    async updateBooking(bookingId: number, token: string, putRequestBody?: Booking)
+    async patchBooking(bookingId: number, token: string, fieldsToUpdate: Fieldname[])
+    async deleteBooking(bookingId: number, token: string)
+    async generateToken(): Promise<string>
 }
 ```
 
-### tsconfig.json
+### 2. Interface Definitions
 ```typescript
-{
-  "compilerOptions": {
-    "target": "ES2022",
-    "module": "commonjs",
-    "resolveJsonModule": true,
-    "esModuleInterop": true,
-    "strict": true
-  }
-}
-```
-
-### .env
-```plaintext
-BASE_API_URL=https://your-api-endpoint.com
-```
-
-## Source Code Organization
-
-### 1. Interface Directory (src/interface/)
-Contains TypeScript interfaces defining data structures:
-```typescript
-// Example: booking-api.interface.ts
 interface Booking {
     firstname: string;
     lastname: string;
@@ -135,194 +109,129 @@ interface Booking {
     };
     additionalneeds?: string;
 }
+
+interface BookingResponse {
+    bookingid: number;
+    booking: Booking;
+}
 ```
 
-### 2. Utils Directory (src/utils/)
-Houses helper functions and utilities:
+### 3. Test Data Management
 ```typescript
-// Example: token-generator.ts
-export const tokenGenerator = () => ({
-    username: process.env.USERNAME,
-    password: process.env.PASSWORD
-});
-```
-
-### 3. Fixtures Directory (src/fixtures/)
-Manages test data and fixtures:
-```typescript
-// Example: patch-test-fixture.ts
-export const patchTestFixture = async ({ request }) => {
-    // Fixture implementation
-};
-```
-
-## Test Implementation
-
-### Test File Structure
-```typescript
-import { test, expect } from '@playwright/test';
-
-test.describe('API Test Suite', () => {
-    test.beforeEach(async ({ request }) => {
-        // Setup code
-    });
-
-    test('test case description', async ({ request }) => {
-        // Test implementation
-    });
-});
-```
-
-### Test Data Management
-1. JSON Test Data Files
-```json
+// Example test data structure
 {
   "testCases": [
     {
-      "description": "Test case description",
-      "input": { },
-      "expectedOutput": { }
+      "description": "Update specific fields",
+      "fieldsToUpdate": ["firstname", "lastname"],
+      "expectedStatus": 200
     }
   ]
 }
 ```
 
-2. Data Helpers
+## Test Implementation
+
+### 1. Basic API Tests
 ```typescript
-export class TestDataHelper {
-    constructor(private filePath: string) {}
-    
-    getTestCases() {
-        // Implementation
-    }
+test('POST API request - Create Booking', async ({ request }) => {
+    const {postResponse, bookingData} = await apiHelper.createBooking();
+    expect(postResponse.status()).toBe(200);
+});
+```
+
+### 2. Parameterized Tests
+```typescript
+for (const testCase of testCases) {
+    test(`PATCH API - ${testCase.description}`, async ({ request }) => {
+        const {bookingData} = await apiHelper.createBooking();
+        const token = await apiHelper.generateToken();
+        const {patchResponse} = await apiHelper.patchBooking(
+            bookingData.bookingid, 
+            token, 
+            testCase.fieldsToUpdate
+        );
+    });
 }
 ```
-
-## CI/CD Pipeline
-
-### GitHub Actions Workflow
-```yaml
-# .github/workflows/playwright.yml
-name: Playwright Tests
-on:
-  push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-      - name: Install dependencies
-        run: npm ci
-      - name: Run Playwright tests
-        run: npm test
-```
-
-### Pipeline Stages
-1. Checkout code
-2. Setup Node.js environment
-3. Install dependencies
-4. Execute tests
-5. Generate reports
-6. Upload artifacts
-
-## Reporting
-
-### 1. Monocart Reporter
-- HTML report generation
-- Test execution timeline
-- Detailed error reporting
-- Screenshot capture support
-
-### 2. Mochawesome Reporter
-- Alternative HTML reports
-- Test statistics
-- Failure analysis
-- Custom report styling
 
 ## Best Practices
 
-### 1. Code Organization
-- Follow consistent file naming conventions
-- Group related tests in test suites
-- Maintain separate utility functions
-- Use TypeScript interfaces for data structures
+### 1. API Helper Pattern
+- Centralize API calls in the ApiHelper class
+- Use strong typing for request/response data
+- Implement reusable methods for common operations
 
-### 2. Test Data Management
-- Use JSON files for test data
-- Implement data helpers
-- Maintain fixture isolation
-- Use environment variables for sensitive data
-
-### 3. Error Handling
 ```typescript
-try {
-    const response = await request.post('/endpoint');
-    expect(response.status()).toBe(200);
-} catch (error) {
-    console.error('Request failed:', error);
-    throw error;
+// Example of reusable method
+async generateToken(): Promise<string> {
+    const response = await this.request.post('/auth', {
+        data: tokenGenerator()
+    });
+    return (await response.json()).token;
 }
 ```
 
-### 4. Logging and Debugging
+### 2. Test Data Organization
+- Use JSON files for test data
+- Implement data helpers for data generation
+- Maintain fixture isolation
+- Use TypeScript interfaces for type safety
+
+### 3. Error Handling
 ```typescript
-test.beforeEach(async ({ request }, testInfo) => {
-    console.log(`Running test: ${testInfo.title}`);
-});
+async patchBooking(bookingId: number, token: string, fieldsToUpdate: Fieldname[]): Promise<{
+    patchResponse: any,
+    responseData: Booking,
+    patchData: Partial<Booking>
+}> {
+    let responseData = {} as Booking;
+    if(patchResponse.status() === 200){
+        responseData = await patchResponse.json();
+    }
+    return {patchResponse, responseData, patchData};
+}
 ```
+
+### 4. Type Safety
+- Use TypeScript interfaces for all data structures
+- Implement proper type assertions
+- Utilize generic types where appropriate
 
 ## Troubleshooting Guide
 
 ### Common Issues
 
-1. **Test Data Loading Failures**
-   - Verify file paths
-   - Check JSON syntax
-   - Validate data structure
+1. **Type Errors**
+   ```typescript
+   // Incorrect
+   const responseData = await response.json();
+   
+   // Correct
+   const responseData = await response.json() as Booking;
+   ```
 
-2. **Authentication Issues**
-   - Check environment variables
-   - Verify token generation
-   - Validate request headers
+2. **API Response Handling**
+   ```typescript
+   // Always check status before accessing response
+   if (response.status() === 200) {
+       const data = await response.json();
+   }
+   ```
 
-3. **Type Errors**
-   - Run `tsc` for type checking
-   - Update interfaces if needed
-   - Check import statements
-
-### Debugging Tools
-
-1. **Playwright Debug Mode**
-```bash
-PWDEBUG=1 npm test
-```
-
-2. **VSCode Debug Configuration**
-```json
-{
-  "type": "node",
-  "request": "launch",
-  "name": "Debug Tests",
-  "program": "${workspaceFolder}/node_modules/@playwright/test/lib/cli/cli.js",
-  "args": ["test"],
-  "console": "integratedTerminal"
-}
-```
-
----
+3. **Test Data Issues**
+   - Verify JSON file paths
+   - Check data structure matches interfaces
+   - Ensure proper type assertions
 
 ## Additional Resources
 
-1. [Playwright Documentation](https://playwright.dev/docs/intro)
-2. [TypeScript Handbook](https://www.typescriptlang.org/docs/)
-3. [Chance.js Documentation](https://chancejs.com/)
-4. [GitHub Actions Documentation](https://docs.github.com/en/actions)
+1. [Playwright API Testing Guide](https://playwright.dev/docs/api-testing)
+2. [TypeScript Documentation](https://www.typescriptlang.org/docs/)
+3. [Monocart Reporter Documentation](https://github.com/cenfun/monocart-reporter)
 
 ---
+
+*Last Updated: March 2024*
 
  
