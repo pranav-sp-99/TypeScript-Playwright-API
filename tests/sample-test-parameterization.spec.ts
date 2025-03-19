@@ -1,10 +1,8 @@
 import { expect, test } from '@playwright/test'
 import dotenv from 'dotenv'
-import { PatchDataHelper } from '../src/utils/patch-data-helper';
-import { Booking, BookingResponse, TokenResponse, PatchTestCase } from '../src/interface/booking-api.interface';
-import { BookingRequestBody } from '../src/utils/post-api-helper';
-import { tokenGenerator } from '../src/utils/token-generator';
-import { createPatchRequest } from '../src/utils/patch-data-helper';
+import { PatchDataHelper } from '../src/fixtures/patch-data-helper';
+import { Booking, BookingResponse } from '../src/interface/booking-api.interface';
+import { ApiHelper } from '../src/utils/api-helper';
 
 dotenv.config()
 
@@ -13,77 +11,60 @@ const helper = new PatchDataHelper('./src/fixtures/data/patch-test-data.json');
 const testCases = helper.getPatchTestCases();
 
 test.describe('Patch Test Suite', () => {
+
+    let apiHelper : ApiHelper
+
     test.use({
         baseURL: process.env.BASE_API_URL
     });
 
     test.beforeEach(async ({ request }) => {
+        apiHelper = new ApiHelper(request)
         test.skip(!testCases || testCases.length === 0, 'No test cases found in patch-test-data.json');
     });
 
     for (const testCase of testCases) {
         test(`PATCH API - ${testCase.description}`, async ({ request }) => {
             // Create a new booking
-            const requestBody: Booking = BookingRequestBody();
-            const postResponse = await request.post('/booking', { 
-                data: requestBody 
-            });
-            
-            const postResponseData: BookingResponse = await postResponse.json();
-            console.log(`The POST response: ${JSON.stringify(postResponseData, null, 2)}`);
-
-            const bookingId = postResponseData.bookingid;
+            const {bookingData} = await apiHelper.createBooking()
+            const bookingId = bookingData.bookingid;
 
             // Get auth token
-            const tokenResponse = await request.post('/auth', {
-                data: tokenGenerator()
-            });
-            const tokenResponseData: TokenResponse = await tokenResponse.json();
-            const token: string = tokenResponseData.token;
+            const token = await apiHelper.generateToken()
 
             // Generate patch data based on test case
-            const patchData = createPatchRequest(testCase.fieldsToUpdate);
-            console.log('Test case:', testCase);
-            console.log('Patch data:', patchData);
-
-            // Make PATCH request
-            const response = await request.patch(`/booking/${bookingId}`, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Cookie': `token=${token}`
-                },
-                data: patchData
-            });
+            const {patchResponse, responseData, patchData} = await apiHelper.patchBooking(bookingId, token, testCase.fieldsToUpdate)
 
             // Verify response
-            expect(response.status()).toBe(testCase.expectedStatus);
+            expect(patchResponse.status()).toBe(testCase.expectedStatus);
 
-            if (response.status() === 200) {
-                const responseBody = await response.json();
+            if (patchResponse.status() === 200) {
+                // Type assertion to ensure TypeScript knows responseData is a Booking
+                const bookingResponse = responseData as Booking;
                 
                 // Verify updated fields
                 for (const field of testCase.fieldsToUpdate) {
                     if (field === 'all') {
-                        expect(responseBody).toHaveProperty('firstname');
-                        expect(responseBody).toHaveProperty('lastname');
-                        expect(responseBody).toHaveProperty('totalprice');
-                        expect(responseBody).toHaveProperty('depositpaid');
-                        expect(responseBody).toHaveProperty('bookingdates');
-                        expect(responseBody.bookingdates).toHaveProperty('checkin');
-                        expect(responseBody.bookingdates).toHaveProperty('checkout');
-                        expect(responseBody).toHaveProperty('additionalneeds');
+                        expect(bookingResponse).toHaveProperty('firstname');
+                        expect(bookingResponse).toHaveProperty('lastname');
+                        expect(bookingResponse).toHaveProperty('totalprice');
+                        expect(bookingResponse).toHaveProperty('depositpaid');
+                        expect(bookingResponse).toHaveProperty('bookingdates');
+                        expect(bookingResponse.bookingdates).toHaveProperty('checkin');
+                        expect(bookingResponse.bookingdates).toHaveProperty('checkout');
+                        expect(bookingResponse).toHaveProperty('additionalneeds');
                     } else if (field === 'bookingdates') {
-                        expect(responseBody).toHaveProperty('bookingdates');
-                        expect(responseBody.bookingdates).toHaveProperty('checkin');
-                        expect(responseBody.bookingdates).toHaveProperty('checkout');
+                        expect(bookingResponse).toHaveProperty('bookingdates');
+                        expect(bookingResponse.bookingdates).toHaveProperty('checkin');
+                        expect(bookingResponse.bookingdates).toHaveProperty('checkout');
                     } else if (field === 'bookingdates.checkin') {
-                        expect(responseBody).toHaveProperty('bookingdates');
-                        expect(responseBody.bookingdates).toHaveProperty('checkin');
+                        expect(bookingResponse).toHaveProperty('bookingdates');
+                        expect(bookingResponse.bookingdates).toHaveProperty('checkin');
                     } else if (field === 'bookingdates.checkout') {
-                        expect(responseBody).toHaveProperty('bookingdates');
-                        expect(responseBody.bookingdates).toHaveProperty('checkout');
+                        expect(bookingResponse).toHaveProperty('bookingdates');
+                        expect(bookingResponse.bookingdates).toHaveProperty('checkout');
                     } else {
-                        expect(responseBody).toHaveProperty(field);
+                        expect(bookingResponse).toHaveProperty(field);
                     }
                 }
             }
