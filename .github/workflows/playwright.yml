@@ -1,53 +1,153 @@
 name: Playwright Tests
 on:
   push:
-    branches: 
-    - main
-    
+    branches:
+      - main
+
+env:
+  CI: "true"
+  BASE_API_URL: ${{ secrets.BASE_API_URL }}
+
 jobs:
   test:
     timeout-minutes: 60
     runs-on: windows-latest
-    
-    steps:
-    
-    - name: Fetch the code
-      uses: actions/checkout@v4
 
-    - name: Setup Node
-      uses: actions/setup-node@v4
-      with:
-        node-version: lts/*
-    
-    - name: Install dependencies
-      run: npm ci
-    
-    - name: Install Playwright Browsers
-      run: npx playwright install --with-deps
-  
-    - name: Run Playwright tests
-      run: npx playwright test
-    
-    - name: Upload Playwright report
-      uses: actions/upload-artifact@v4
-      if: ${{ !cancelled() }}
-      with:
-        name: playwright-report
-        path: playwright-report/
-        retention-days: 30
-    
-    - name: Upload monocart-report
-      uses: actions/upload-artifact@v4
-      if: ${{ !cancelled() }}
-      with:
-        name: monocart-report
-        path: monocart-report/
-        retention-days: 30
-    
-    - name: Upload Mochawesom report
-      uses: actions/upload-artifact@v4
-      if: ${{ !cancelled() }}
-      with:
-        name: pwmochawesome-report
-        path: pwmochawesome-report/
-        retention-days: 30
+    steps:
+      - name: Fetch the code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+
+      - name: Run Playwright tests
+        run: npx playwright test
+
+      - name: Parse Test Results
+        # Run this step always to get results even on failure
+        if: always()
+        id: parse_results
+        shell: pwsh
+        run: |
+          $jsonPath = "results.json"
+          if (Test-Path $jsonPath) {
+            try {
+              $results = Get-Content $jsonPath -Raw | ConvertFrom-Json
+
+              # Access stats based on the provided results.json structure
+              $passed = $results.stats.expected  # Use 'expected' for passed count
+              $failed = $results.stats.unexpected # Use 'unexpected' for failed count
+              $skipped = $results.stats.skipped
+
+              # Ensure values are treated as numbers
+              $passedNum = if ($passed) { [int]$passed } else { 0 }
+              $failedNum = if ($failed) { [int]$failed } else { 0 }
+              $skippedNum = if ($skipped) { [int]$skipped } else { 0 }
+              
+              # Total includes passed, failed, and skipped
+              $total = $passedNum + $failedNum + $skippedNum
+
+              Write-Host "Passed: $passedNum, Failed: $failedNum, Skipped: $skippedNum, Total: $total"
+
+              # Set environment variables for use in later steps
+              echo "TEST_SUMMARY_PASSED=$passedNum" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+              echo "TEST_SUMMARY_FAILED=$failedNum" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+              echo "TEST_SUMMARY_SKIPPED=$skippedNum" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+              echo "TEST_SUMMARY_TOTAL=$total" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+            } catch {
+              Write-Host "Error parsing results.json: $_"
+              # Keep default "N/A" values if parsing fails
+            }
+          } else {
+            Write-Host "results.json not found. Cannot parse test summary."
+            # Keep default "N/A" values
+          }
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
+
+      - name: Upload monocart-report
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: monocart-report
+          path: monocart-report/
+          retention-days: 30
+
+      - name: Zip report directories
+        # Run this step even if tests fail, but not if cancelled, to attach failure reports
+        if: ${{ !cancelled() }}
+        run: |
+          Compress-Archive -Path playwright-report -DestinationPath playwright-report.zip
+          Compress-Archive -Path monocart-report -DestinationPath monocart-report.zip
+        shell: pwsh # Specify PowerShell
+
+      - name: Send email report
+        uses: dawidd6/action-send-mail@v4
+        # Use always() to ensure email is sent even on test failure
+        if: always()
+        with:
+          server_address: smtpout.secureserver.net
+          server_port: 465
+          username: ${{ secrets.USER_EMAIL }}
+          password: ${{ secrets.USER_EMAIL_PWD }}
+          secure: true
+
+          subject: Playwright test run report (${{ github.repository }} - ${{ github.run_id }}) - Status ${{ job.status }}
+          to: pranav.sp@quarksek.com
+          from: ${{secrets.USER_EMAIL}}
+          # Use html_body for HTML content
+          html_body: |
+            <p>Playwright test run completed for repository <b>${{ github.repository }}</b>.</p>
+            <ul>
+              <li>Branch: ${{ github.ref_name }}</li>
+              <li>Commit: ${{ github.sha }}</li>
+              <li>Workflow Run ID: ${{ github.run_id }}</li>
+              <li>Job Status: ${{ job.status }}</li>
+            </ul>
+            <h3>Test Summary:</h3>
+            <table border="1" cellpadding="5" cellspacing="0">
+              <thead>
+                <tr>
+                  <th>Status</th>
+                  <th>Count</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Total</td>
+                  <td>${{ env.TEST_SUMMARY_TOTAL }}</td>
+                </tr>
+                <tr>
+                  <td>Passed</td>
+                  <td>${{ env.TEST_SUMMARY_PASSED }}</td>
+                </tr>
+                <tr>
+                  <td>Failed</td>
+                  <td>${{ env.TEST_SUMMARY_FAILED }}</td>
+                </tr>
+                <tr>
+                  <td>Skipped</td>
+                  <td>${{ env.TEST_SUMMARY_SKIPPED }}</td>
+                </tr>
+              </tbody>
+            </table>
+            <p>Reports are attached (if generated and zipped).</p>
+
+          attachments: |
+            playwright-report.zip
+            monocart-report.zip
