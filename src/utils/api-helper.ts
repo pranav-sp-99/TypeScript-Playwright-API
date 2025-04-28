@@ -1,4 +1,4 @@
-import { APIRequestContext } from "@playwright/test";
+import { APIRequestContext, APIResponse } from "@playwright/test";
 import {
   Booking,
   BookingResponse,
@@ -22,7 +22,7 @@ export class ApiHelper {
   async createBooking(
     postRequestBody: Booking = BookingRequestBody()
   ): Promise<{
-    postResponse: any;
+    postResponse: APIResponse;
     bookingData: BookingResponse;
     postRequestBody: Booking;
   }> {
@@ -73,7 +73,11 @@ export class ApiHelper {
     bookingId: number,
     token: string,
     putRequestBody: Booking = BookingRequestBody()
-  ): Promise<{ response: any; updatedData: Booking; putRequestBody: Booking }> {
+  ): Promise<{
+    response: APIResponse;
+    updatedData: Booking;
+    putRequestBody: Booking;
+  }> {
     const response = await this.request.put(`/booking/${bookingId}`, {
       headers: {
         "Content-Type": "application/json",
@@ -90,7 +94,7 @@ export class ApiHelper {
   async deleteBooking(
     bookingId: number,
     token: string
-  ): Promise<{ response: any }> {
+  ): Promise<{ response: APIResponse }> {
     const response = await this.request.delete(`/booking/${bookingId}`, {
       headers: {
         "Content-Type": "application/json",
@@ -106,7 +110,7 @@ export class ApiHelper {
     token: string,
     fieldsToUpdate: Fieldname[] = []
   ): Promise<{
-    patchResponse: any;
+    patchResponse: APIResponse;
     responseData: Booking;
     patchData: Partial<Booking>;
   }> {
