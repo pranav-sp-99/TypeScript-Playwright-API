@@ -1,10 +1,7 @@
 import { expect, test } from "@playwright/test";
 import dotenv from "dotenv";
 import { PatchDataHelper } from "../src/test-data/patch-data-helper";
-import {
-  Booking,
-  BookingResponse,
-} from "../src/interface/booking-api.interface";
+import { Booking } from "../src/interface/booking-api.interface";
 import { ApiHelper } from "../src/utils/api-helper";
 
 // Load environment variables
